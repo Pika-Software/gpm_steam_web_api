@@ -1,10 +1,16 @@
 module( "steam", package.seeall )
 
+local logger = GPM.Logger( "Steam Web API" )
+
 local key = nil
 function Key( str )
     assert( isstring(str), "Steam Web API key must be a string!" )
     key = str
 end
+
+local util_JSONToTable = util.JSONToTable
+local http_isSuccess = http.isSuccess
+local table_concat = table.concat
 
 function GetWorkshopItemInfo( callback, ... )
     local parameters = {}
@@ -20,18 +26,18 @@ function GetWorkshopItemInfo( callback, ... )
 
     http.Post("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", parameters,
     function( body, len, headers, code )
-        if http.isSuccess( code ) then
-            local json = util.JSONToTable( body )
+        if http_isSuccess( code ) then
+            local json = util_JSONToTable( body )
             if (json ~= nil) and (json.response ~= nil) then
                 callback( json.response.publishedfiledetails )
                 return
             end
         end
 
-        MsgN( "Error on getting info about " .. table.concat( args, ", " ) .. " addons from Steam Workshop! (Code: " .. code .. ") Body:\n" .. body )
+        logger:error( "Error on getting info about `{1}` addons from Steam Workshop! (Code: {2}) Body:\n{3}", table_concat( args, ", " ), code, body )
     end,
     function( err )
-        MsgN( "Error on getting info about " .. table.concat( args, ", " ) .. " addons from Steam Workshop:\n" .. err )
+        logger:error( "Error on getting info about `{1}` addons from Steam Workshop:\n{2}", table_concat( args, ", " ), err )
     end)
 end
 
@@ -49,27 +55,90 @@ function GetCollectionDetails( callback, ... )
 
     http.Post("https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/", parameters,
     function( body, len, headers, code )
-        if http.isSuccess( code ) then
-            local json = util.JSONToTable( body )
+        if http_isSuccess( code ) then
+            local json = util_JSONToTable( body )
             if (json ~= nil) and (json.response ~= nil) then
                 callback( json.response.collectiondetails )
                 return
             end
         end
 
-        MsgN( "Error on getting info about " .. table.concat( args, ", " ) .. " collections from Steam Workshop! (Code: " .. code .. ") Body:\n" .. body )
+        logger:error( "Error on getting info about `{1}` collections from Steam Workshop! (Code: {2}) Body:\n{3}", table_concat( args, ", " ), code, body )
     end,
     function( err )
-        MsgN( "Error on getting info about " .. table.concat( args, ", " ) .. " collections from Steam Workshop:\n" .. err )
+        logger:error( "Error on getting info about `{1}` collections from Steam Workshop:\n{2}", table_concat( args, ", " ), err )
     end)
 end
 
--- steam.GetWorkshopItemInfo( function( addons )
---     print( addons, "\n" )
---     PrintTable( addons )
--- end, "2799307109" )
+function GetUserInfo( callback, ... )
+    local args = {...}
+    if (#args > 100) then
+        logger:error( "Forbidden >100 steamid's!" )
+        return
+    end
 
--- steam.GetCollectionDetails( function( collections )
---     print( collections, "\n" )
---     PrintTable( collections )
--- end, "2799727735" )
+    local request = http.request("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/", function( code, body, headers )
+        if http_isSuccess( code ) then
+            local json = util_JSONToTable( body )
+            if (json ~= nil) and (json.response ~= nil) then
+                callback( json.response.players )
+                return
+            end
+        end
+
+        logger:error( "Error on getting info about `{1}` users from Steam Web API! (Code: {2}) Body:\n{3}", table_concat( args, ", " ), code, body )
+    end)
+
+    request:addParameter( "key", key )
+    request:addParameter( "steamids", table_concat( args, ", " ) )
+end
+
+function GetUserGroups( callback, steamid )
+    local request = http.request("https://api.steampowered.com/ISteamUser/GetUserGroupList/v1/", function( code, body, headers )
+        if http_isSuccess( code ) then
+            local json = util_JSONToTable( body )
+            if (json ~= nil) and (json.response ~= nil) then
+                if (json.response.success == false) then
+                    logger:warn( "User groups from user `{1}` - success is false, request is failed!", steamid )
+                    return
+                end
+
+                callback( json.response.groups )
+                return
+            end
+        end
+
+        logger:error( "Error on getting info about `{1}` user from Steam Web API! (Code: {2}) Body:\n{3}", steamid, code, body )
+    end)
+
+    request:addParameter( "key", key )
+    request:addParameter( "steamid", steamid )
+end
+
+STEAM_PROFILE = 1
+STEAM_GROUP = 2
+STEAM_OFFICIAL_GAME_GROUP = 3
+
+local typeToTitle = {
+    [STEAM_PROFILE] = "profile",
+    [STEAM_GROUP] = "group",
+    [STEAM_OFFICIAL_GAME_GROUP] = "official game group"
+}
+
+function GetIDFromURL( callback, url, type )
+    local request = http.request("https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/", function( code, body, headers )
+        if http_isSuccess( code ) then
+            local json = util_JSONToTable( body )
+            if (json ~= nil) and (json.response ~= nil) then
+                callback( json.response )
+                return
+            end
+        end
+
+        logger:error( "Error on getting id for `{1}` {2} from Steam Web API! (Code: {3}) Body:\n{4}", url, typeToTitle[ type or STEAM_PROFILE ], code, body )
+    end)
+
+    request:addParameter( "key", key )
+    request:addParameter( "vanityurl", url )
+    request:addParameter( "url_type", type or STEAM_PROFILE )
+end

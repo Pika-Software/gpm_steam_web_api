@@ -5,6 +5,7 @@ local logger = GPM.Logger( "Steam Web API" )
 local key = nil
 local api_url = "https://api.steampowered.com/"
 
+-- https://steamcommunity.com/dev/apikey
 function Key( str )
     assert( isstring(str), "Steam Web API key must be a string!" )
     key = str

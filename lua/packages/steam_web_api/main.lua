@@ -71,7 +71,10 @@ function GetWorkshopItemInfo( callback, ... )
                 return
             end
 
-            pcall( callback, json.response.publishedfiledetails )
+            if (callback) then
+                callback( json.response.publishedfiledetails )
+            end
+
             return
         end
 
@@ -113,7 +116,10 @@ function GetCollectionDetails( callback, ... )
                 return
             end
 
-            pcall( callback, json.response.collectiondetails )
+            if (callback) then
+                callback( json.response.collectiondetails )
+            end
+
             return
         end
 
@@ -156,7 +162,10 @@ function GetUserInfo( callback, ... )
                 return
             end
 
-            pcall( callback, json.response.players )
+            if (callback) then
+                callback( json.response.players )
+            end
+
             return
         end
 
@@ -183,7 +192,10 @@ function GetUserGroups( callback, steamid )
                 return
             end
 
-            pcall( callback, json.response.groups )
+            if (callback) then
+                callback( json.response.groups )
+            end
+
             return
         end
 
@@ -210,7 +222,10 @@ function GetSteamLevel( callback, steamid )
                 return
             end
 
-            pcall( callback, json.response.player_level )
+            if (callback) then
+                callback( json.response.player_level )
+            end
+
             return
         end
 
@@ -246,7 +261,10 @@ function GetIDFromURL( callback, url, type )
                 return
             end
 
-            pcall( callback, json.response.steamid )
+            if (callback) then
+                callback( json.response.steamid )
+            end
+
             return
         end
 
@@ -285,7 +303,10 @@ function GetBans( callback, ... )
                 return
             end
 
-            pcall( callback, json.players )
+            if (callback) then
+                callback( json.players )
+            end
+
             return
         end
 
@@ -312,7 +333,10 @@ function GetOwnedGames( callback, steamid, include_appinfo, include_played_free_
                 return
             end
 
-            pcall( callback, json.response.games, json.response.game_count )
+            if (callback) then
+                callback( json.response.games, json.response.game_count )
+            end
+
             return
         end
 
@@ -335,7 +359,10 @@ function GetApp( callback, steamid, id )
     GetOwnedGames(function( games, count )
         for num, app in ipairs( games ) do
             if (app.appid == appid) then
-                pcall( callback, app )
+                if (callback) then
+                    callback( app )
+                end
+
                 return
             end
         end
@@ -350,7 +377,9 @@ end
 */
 function GetGarrysMod( callback, steamid )
     GetApp(function( app )
-        pcall( callback, app )
+        if (callback) then
+            callback( app )
+        end
     end, steamid, 4000 )
 end
 
@@ -360,6 +389,8 @@ end
 */
 function GetGarrysModHours( callback, steamid )
     GetGarrysMod( function( app )
-        pcall( callback, math.floor( app.playtime_forever / 60 ) )
+        if (callback) then
+            callback( math.floor( app.playtime_forever / 60 ) )
+        end
     end, steamid )
 end

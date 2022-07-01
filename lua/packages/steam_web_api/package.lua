@@ -2,7 +2,7 @@ Name = "Steam Web API"
 Description = "Library for comfortable work with Steam Web API"
 
 Author = "PrikolMen:-b"
-Version = "3.0.0"
+Version = "3.1.0"
 License = "MIT"
 
 Dependencies = {

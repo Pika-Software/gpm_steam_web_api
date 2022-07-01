@@ -49,6 +49,10 @@ function GetWorkshopItemInfo( callback, ... )
     parameters.itemcount = 0
 
     local args = {...}
+    if istable( args[1] ) then
+        args = args[1]
+    end
+
     for num, wsid in ipairs( args ) do
         parameters["publishedfileids[" .. parameters.itemcount .. "]"] = wsid
         parameters.itemcount = parameters.itemcount + 1
@@ -87,6 +91,10 @@ function GetCollectionDetails( callback, ... )
     parameters.collectioncount = 0
 
     local args = {...}
+    if istable( args[1] ) then
+        args = args[1]
+    end
+
     for num, wsid in ipairs( args ) do
         parameters["publishedfileids[" .. parameters.collectioncount .. "]"] = wsid
         parameters.collectioncount = parameters.collectioncount + 1
@@ -122,6 +130,10 @@ end
 */
 function GetUserInfo( callback, ... )
     local args = {...}
+    if istable( args[1] ) then
+        args = args[1]
+    end
+
     local count = #args
 
     if (count > 100) then
@@ -252,6 +264,10 @@ end
 */
 function GetBans( callback, ... )
     local args = {...}
+    if istable( args[1] ) then
+        args = args[1]
+    end
+
     local count = #args
 
     local steamids = ""
